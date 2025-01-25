@@ -45,3 +45,16 @@ jobs:
           name: release_on_${{ matrix. os }}
           path: release/
           retention-days: 5
+      - name: Get Version
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/${{ steps.package-version.outputs.version }}/vsm_${{ steps.package-version.outputs.version }}.exe
+          tag_name: v${{ steps.package-version.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
