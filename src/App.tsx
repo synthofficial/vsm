@@ -8,6 +8,10 @@ const App: React.FC = () => {
   const [accounts, setAccounts] = useState<AccountProps[] | null>(null);
 
   useEffect(() => {
+
+    //Check updates
+    window.api.checkUpdate();
+
     fetchAccounts();
   }, []);
 

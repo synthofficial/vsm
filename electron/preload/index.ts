@@ -32,7 +32,13 @@ const api = {
   checkShop: (accountNumber : number) => ipcRenderer.invoke("view-account-store", accountNumber),
   close: () => ipcRenderer.invoke("close"),
   maximize: () => ipcRenderer.invoke("maximize"),
-  minimize: () => ipcRenderer.invoke("minimize")
+  minimize: () => ipcRenderer.invoke("minimize"),
+  checkUpdate: () => ipcRenderer.invoke('check-update'),
+  startDownload: () => ipcRenderer.invoke('start-download'),
+  quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+  onUpdateAvailable: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('update-can-available', callback),
+  onDownloadProgress: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('download-progress', callback),
+  onUpdateDownloaded: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('update-downloaded', callback)
 }
 
 contextBridge.exposeInMainWorld('api', api)

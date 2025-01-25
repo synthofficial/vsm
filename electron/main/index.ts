@@ -7,6 +7,7 @@ import { update } from './update'
 import fs from "fs";
 import { createValorantApiClient, provideAuthViaLocalApi, provideLockFile, provideLogFile, useProviders } from '@tqman/valorant-api-client'
 import { Client } from "@xhayper/discord-rpc";
+
 const clientId = "1331225233205497928";
 const client = new Client({
   clientId: clientId
@@ -82,7 +83,7 @@ async function createWindow() {
   })
 
   // Auto update
-  update(win)
+  console.log(update(win))
 }
 
 app.whenReady().then(createWindow)

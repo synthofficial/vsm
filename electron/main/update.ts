@@ -16,7 +16,9 @@ export function update(win: Electron.BrowserWindow) {
   autoUpdater.allowDowngrade = false
 
   // start check
-  autoUpdater.on('checking-for-update', function () { })
+  autoUpdater.on('checking-for-update', function () {
+    console.log("checking for update")
+   })
   // update available
   autoUpdater.on('update-available', (arg: UpdateInfo) => {
     win.webContents.send('update-can-available', { update: true, version: app.getVersion(), newVersion: arg?.version })
@@ -28,11 +30,8 @@ export function update(win: Electron.BrowserWindow) {
 
   // Checking for updates
   ipcMain.handle('check-update', async () => {
-    if (!app.isPackaged) {
-      const error = new Error('The update feature is only available after the package.')
-      return { message: error.message, error }
-    }
 
+    autoUpdater.forceDevUpdateConfig = true
     try {
       return await autoUpdater.checkForUpdatesAndNotify()
     } catch (error) {
