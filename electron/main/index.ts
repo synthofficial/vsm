@@ -130,13 +130,13 @@ client.on("ready", async() => {
     {
       details: "VSM [1.0.0]",
       state: `Managing ${totalAccounts} accounts`,
-      largeImageKey: "https://i.pinimg.com/736x/b7/cf/62/b7cf62846ae6ae5e96b35cf9d5e05a7c.jpg",
+      largeImageKey: "https://cdn3.emoji.gg/emojis/9768_Radiant_Valorant.png",
       largeImageText: "Smurfing made easier.",
       startTimestamp: new Date(),
       buttons: [
         {
           label: "Download Here",
-          url: "https://google.com"
+          url: "https://github.com/synthofficial/vsm/releases"
         }
       ]
     }

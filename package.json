@@ -35,9 +35,7 @@
     "@xhayper/discord-rpc": "^1.2.0",
     "electron-updater": "^6.3.9",
     "embla-carousel-react": "^7.1.0",
-    "recharts": "2",
-    "valorant-api-client": "^0.0.1",
-    "valorant.js": "^1.6.5"
+    "recharts": "2"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
