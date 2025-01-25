@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "vsm",
   "asar": true,
+  "generateUpdaterJSONFilesForAllChannels": true,
   "directories": {
     "output": "release/${version}"
   },
@@ -9,13 +10,6 @@
     "dist-electron",
     "dist"
   ],
-  "mac": {
-    "artifactName": "${productName}_${version}.${ext}",
-    "target": [
-      "dmg",
-      "zip"
-    ]
-  },
   "win": {
     "target": [
       {
@@ -26,7 +20,8 @@
       }
     ],
     "artifactName": "${productName}_${version}.${ext}",
-    "generateUpdatesFilesForAllChannels": true
+    "generateUpdatesFilesForAllChannels": true,
+    "generateUpdaterJSONFiles": true
   },
   "nsis": {
     "oneClick": false,
