@@ -1,0 +1,4 @@
+provider: github
+owner: synthofficial
+repo: vsm
+updaterCacheDirName: vsm-updater
