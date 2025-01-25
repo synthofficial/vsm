@@ -62,6 +62,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/${{ steps.package-version.outputs.version }}/vsm_${{ steps.package-version.outputs.version }}.exe
+          files: |
+            release/${{ steps.package-version.outputs.version }}/vsm_${{ steps.package-version.outputs.version }}.exe
+            release/${{ steps.package-version.outputs.version }}/latest.yml
           tag_name: v${{ steps.package-version.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
