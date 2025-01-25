@@ -1,5 +1,7 @@
 name: Build
 
+permissions: write-all
+
 on:
   push:
     branches: [main]
@@ -31,9 +33,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies
-        run: npm install
-
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
@@ -43,6 +42,9 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm install
 
       - name: Build Release Files
         run: npm run build
