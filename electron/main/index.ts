@@ -125,7 +125,7 @@ const localPath = path.join(appData, '..', 'Local', 'VSM', 'Accounts');
 
 client.on("ready", async() => {
 
-  const totalAccounts = await fs.readdirSync(localPath).length;
+  const totalAccounts = fs.readdirSync(localPath).length;
 
   client.user?.setActivity(
     {

@@ -1,6 +1,6 @@
 {
   "name": "vsm",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "description": "VSM is a detailed account manager for the game VALORANT.",
   "author": "synth",

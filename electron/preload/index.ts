@@ -36,9 +36,9 @@ const api = {
   checkUpdate: () => ipcRenderer.invoke('check-update'),
   startDownload: () => ipcRenderer.invoke('start-download'),
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
-  onUpdateAvailable: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('update-can-available', callback),
-  onDownloadProgress: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('download-progress', callback),
-  onUpdateDownloaded: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on('update-downloaded', callback)
+  onUpdateAvailable: (callback: (arg0: any) => void) => ipcRenderer.on('update-can-available', (_, info) => callback(info)),
+  onDownloadProgress: (callback: (arg0: any) => void) => ipcRenderer.on('download-progress', (_, progress) => callback(progress)),
+  onUpdateDownloaded: (callback: () => void) => ipcRenderer.on('update-downloaded', () => callback())
 }
 
 contextBridge.exposeInMainWorld('api', api)

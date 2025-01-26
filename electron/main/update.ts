@@ -21,8 +21,9 @@ export function update(win: Electron.BrowserWindow) {
    })
   // update available
   autoUpdater.on('update-available', (arg: UpdateInfo) => {
-    win.webContents.send('update-can-available', { update: true, version: app.getVersion(), newVersion: arg?.version })
-  })
+    console.log('Update available event:', arg);
+    win.webContents.send('update-can-available', { update: true, version: app.getVersion(), newVersion: arg?.version });
+  });
   // update not available
   autoUpdater.on('update-not-available', (arg: UpdateInfo) => {
     win.webContents.send('update-can-available', { update: false, version: app.getVersion(), newVersion: arg?.version })
