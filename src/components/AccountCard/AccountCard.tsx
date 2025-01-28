@@ -101,11 +101,6 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
       displayName: string;
     }; 
   }>()
-  const [knifeSkin, setKnifeSkin] = useState<{ 
-    displayIcon: string;
-    displayName: string;
-    fullRender: string;
-  }>()
 
   const [rank, setRank] = useState<{
     TierAfterUpdate : number;
@@ -218,15 +213,6 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
             console.error("Error fetching sheriff skin:", err)
         }
     }
-    const fetchKnife = async() => {
-        try{
-            const data = await GetWeaponSkin(props.loadout.Guns.find((gun) => gun.ID === "2f59173c-4bed-b6c3-2191-dea9b58be9c7")?.ChromaID || "")
-            setKnifeSkin(data.data)
-        }catch(err){
-            console.error("Error fetching knife skin:", err)
-        }
-    }
-
     const checkBan = async() => {
         try {
             if(!props.penalties.Penalties.length) return;
@@ -257,7 +243,6 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
     fetchVandal();
     fetchPhantom();
     fetchSheriff();
-    fetchKnife();
     checkBan();
     fetchRank();
   }, [props.loadout])

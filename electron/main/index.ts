@@ -45,7 +45,7 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
+    title: 'VSM',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     titleBarStyle: 'hidden',
     autoHideMenuBar: true,
@@ -217,6 +217,7 @@ ipcMain.handle('getLocalAppData', async (event, arg) => {
   const localPath = path.join(appDataPath, '..', 'Local'); // Navigate up a directory and then into 'Local'
   return localPath;
 });
+
 async function getAccountDetails() {
   try {
     console.log('Creating client...');
@@ -227,11 +228,6 @@ async function getAccountDetails() {
     
     console.log('Getting user info...');
     const userInfo = await client.local.getAccountAlias();
-    // Only log specific properties we need
-    console.log('User Info:', {
-      game_name: userInfo.data.game_name,
-      tag_line: userInfo.data.tag_line
-    });
 
     console.log('Getting region...');
     const region = (await client.local.getClientRegion()).data.region;
@@ -309,40 +305,6 @@ ipcMain.handle("remove-account", async (_event, accountNumber) => {
   }else return false;
 });
 
-ipcMain.handle("view-account-store", async(_event, accountNumber) => {
-  const accountPath = path.join(localPath, accountNumber.toString());
-  const accountDataPath = path.join(accountPath, 'accountData.json');
-
-  if(fs.existsSync(accountPrivateSettingsPath)){
-    await fs.promises.unlink(accountPrivateSettingsPath);
-    console.log("Deleted existing settings file")
-  }
-
-  if(fs.existsSync(accountPath)){
-    fs.copyFileSync(
-      path.join(accountPath, 'RiotGamesPrivateSettings.yaml'),
-      path.join(riotClientLocalPath, 'RiotGamesPrivateSettings.yaml')
-    );
-  }
-
-  await handleRiotClientProcess(riotClientPath);
-
-  const client = await createValorantApiClient({
-    local: useProviders(provideLockFile()),
-    remote: useProviders([provideLogFile(), provideAuthViaLocalApi()])
-  });
-  const { data : shop } = await client.remote.getStorefront(
-    {
-      data: {
-        puuid: client.remote.puuid
-      }
-    }
-  )
-
-  console.log(shop);
-
-})
-
 ipcMain.handle("login-account", async (_event, accountNumber) => {
   console.log("Login account:", accountNumber);
   const accountPath = path.join(localPath, accountNumber.toString());
@@ -363,7 +325,7 @@ ipcMain.handle("login-account", async (_event, accountNumber) => {
       );
 
       console.log('Settings file copied, launching game...');
-      //await handleValorantLaunch(riotClientPath);
+      await handleValorantLaunch(riotClientPath);
 
       console.log('Waiting for game initialization...');
       await new Promise(resolve => setTimeout(resolve, 15000));

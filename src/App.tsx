@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AccountProps } from './interfaces/Account';
 import AccountCard from './components/AccountCard/AccountCard';
 import Navigation from './components/Navigation';
-import { Modal, Text, Progress, Button, Stack, Group } from '@mantine/core';
+import { Modal, Text, Progress, Button, Stack, Group, Flex } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
 
@@ -69,14 +69,21 @@ const App: React.FC = () => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-2">
-        {accounts.map((account) => (
-          <div key={account.riotName}>
-            <AccountCard 
-              {...account}
-              onAccountUpdate={fetchAccounts}
-            />
-          </div>
-        ))}
+        {accounts && accounts.length > 0 ? (
+          accounts.map((account) => (
+            <div key={account.riotName}>
+              <AccountCard 
+                {...account}
+                onAccountUpdate={fetchAccounts}
+              />
+            </div>
+          ))
+        ) : (
+          <Flex w={"95vw"} h={"90vh"} justify={"center"} align={"center"} direction={"column"}>
+            <Text>No accounts found :(</Text>
+            <Text color="dimmed">You can add an account by pressing the "+".</Text>
+          </Flex>
+        )}
       </div>
       <Navigation onAccountUpdate={fetchAccounts} />
       <Modal 
