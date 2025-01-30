@@ -39,6 +39,13 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
+const riotClientPath = path.join('C:', 'Riot Games', 'Riot Client', 'RiotClientServices.exe');
+const riotClientLocalPath = path.join(app.getPath('appData'), '..', 'Local', 'Riot Games', 'Riot Client', 'Data');
+const accountPrivateSettingsPath = path.join(riotClientLocalPath, 'RiotGamesPrivateSettings.yaml');
+
+const appData = app.getPath('appData');
+const localPath = path.join(appData, '..', 'Local', 'VSM', 'Accounts');
+
 let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
@@ -84,6 +91,12 @@ async function createWindow() {
 
   // Auto update
   console.log(update(win))
+
+  const accounts = fs.readdirSync(localPath);
+  if(!accounts){
+    fs.mkdirSync(localPath);
+  }
+
 }
 
 app.whenReady().then(createWindow)
@@ -116,20 +129,19 @@ function isDirEmpty(dirname: fs.PathLike) {
   });
 }
 
-const riotClientPath = path.join('C:', 'Riot Games', 'Riot Client', 'RiotClientServices.exe');
-const riotClientLocalPath = path.join(app.getPath('appData'), '..', 'Local', 'Riot Games', 'Riot Client', 'Data');
-const accountPrivateSettingsPath = path.join(riotClientLocalPath, 'RiotGamesPrivateSettings.yaml');
 
-const appData = app.getPath('appData');
-const localPath = path.join(appData, '..', 'Local', 'VSM', 'Accounts');
 
 client.on("ready", async() => {
 
-  const totalAccounts = fs.readdirSync(localPath).length;
+  let totalAccounts = 0;
+
+  try{
+    totalAccounts = fs.readdirSync(localPath).length;
+  }catch(e){}
 
   client.user?.setActivity(
     {
-      details: "VSM [1.0.0]",
+      details: "VSM [1.1.1]",
       state: `Managing ${totalAccounts} accounts`,
       largeImageKey: "https://cdn3.emoji.gg/emojis/9768_Radiant_Valorant.png",
       largeImageText: "Smurfing made easier.",
@@ -325,7 +337,7 @@ ipcMain.handle("login-account", async (_event, accountNumber) => {
       );
 
       console.log('Settings file copied, launching game...');
-      await handleValorantLaunch(riotClientPath);
+      //await handleValorantLaunch(riotClientPath);
 
       console.log('Waiting for game initialization...');
       await new Promise(resolve => setTimeout(resolve, 15000));
