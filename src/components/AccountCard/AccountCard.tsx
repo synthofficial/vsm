@@ -330,7 +330,7 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
         </Box>
         <Stack align="center">
           <Text size="lg" fw={700}>
-            {props.riotName ? `${props.riotName}#${props.riotTag}` : props.accountName}
+            {props.riotName ? `${props.riotName}#${props.riotTag} (#${props.accountNumber})` : props.accountName}
           </Text>
           <Group gap={3}>
             <Badge color="blue" size="sm">
