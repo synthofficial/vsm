@@ -142,7 +142,7 @@ client.on("ready", async() => {
 
   client.user?.setActivity(
     {
-      details: "VSM [1.1.2]",
+      details: "VSM [1.2.0]",
       state: `Managing ${totalAccounts} accounts`,
       largeImageKey: "https://cdn3.emoji.gg/emojis/9768_Radiant_Valorant.png",
       largeImageText: "Smurfing made easier.",
@@ -316,133 +316,122 @@ ipcMain.handle("remove-account", async (_event, accountNumber) => {
 });
 
 ipcMain.handle("login-account", async (_event, accountNumber) => {
+  if (!accountNumber) {
+    console.error("No account number provided.");
+    return false;
+  }
+
+  const accountPath = path.join(localPath, accountNumber.toString());
+  const accountDataPath = path.join(accountPath, "accountData.json");
+
+  const settingsFilePath = path.join(riotClientLocalPath, "RiotGamesPrivateSettings.yaml");
+  const clientSettingsFilePath = path.join(riotClientSettingsPath, "RiotClientServices.yaml");
+
+  const requiredFiles = [
+    accountDataPath,
+    path.join(accountPath, "RiotGamesPrivateSettings.yaml"),
+    path.join(accountPath, "RiotClientSettings.yaml"),
+  ];
+
   try {
-    console.log("Login account:", accountNumber);
-    const accountPath = path.join(localPath, accountNumber.toString());
-    const accountDataPath = path.join(accountPath, 'accountData.json');
-    const settingsFilePath = path.join(riotClientLocalPath, 'RiotGamesPrivateSettings.yaml');
-    const clientSettingsFilePath = path.join(riotClientSettingsPath, 'RiotClientServices.yaml');
+    console.log(`\n=== Initiating login for account: ${accountNumber} ===`);
 
-    // Verify account exists and has required files
-    if (!fs.existsSync(accountPath) || 
-        !fs.existsSync(path.join(accountPath, 'RiotGamesPrivateSettings.yaml')) || 
-        !fs.existsSync(accountDataPath)) {
-      console.error("Required files missing");
-      return false;
+    // Validate required files exist
+    const missingFiles = requiredFiles.filter((file) => !fs.existsSync(file));
+    if (missingFiles.length > 0) {
+      throw new Error(`Missing required files: ${missingFiles.join(", ")}`);
     }
 
-    // Ensure Riot Client is fully closed
-    await handleRiotClientProcess(riotClientPath);
-    
-    // Additional check to make sure no riot processes are running
-    const { execSync } = require('child_process');
-    try {
-      execSync('taskkill /F /IM "RiotClientServices.exe" /T');
-      execSync('taskkill /F /IM "RiotClientUx.exe" /T');
-    } catch (e) {
-      // Processes might not exist, that's fine
-      console.log("No existing Riot processes found");
-    }
-
-    // Wait for processes to fully close
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Delete existing settings file if it exists
-    if (fs.existsSync(settingsFilePath)) {
-      try {
-        // Remove read-only attribute if it exists
-        execSync(`attrib -r "${settingsFilePath}"`);
-        await fs.promises.unlink(settingsFilePath);
-        console.log("Deleted existing settings file");
-      } catch (e) {
-        console.error("Error deleting existing file:", e);
+    // Ensure directories exist
+    for (const dir of [settingsFilePath, clientSettingsFilePath]) {
+      const dirPath = path.dirname(dir);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true, mode: 0o755 });
       }
     }
 
-    console.log("Switching to account:", accountNumber);
-    
-    // Copy settings file
-    fs.copyFileSync(
-      path.join(accountPath, 'RiotGamesPrivateSettings.yaml'),
+    // Backup and Copy Function
+    const backupAndCopyFile = async (source: fs.PathLike, destination: fs.PathLike) => {
+      if (fs.existsSync(destination)) {
+        const backupPath = `${destination}.backup`;
+        await fs.promises.copyFile(destination, backupPath);
+        await fs.promises.unlink(destination);
+      }
+      await fs.promises.copyFile(source, destination);
+    };
+
+    // Copy Riot settings files
+    await backupAndCopyFile(
+      path.join(accountPath, "RiotGamesPrivateSettings.yaml"),
       settingsFilePath
     );
-    fs.copyFileSync(
-      path.join(accountPath, 'RiotClientSettings.yaml'),
+    await backupAndCopyFile(
+      path.join(accountPath, "RiotClientSettings.yaml"),
       clientSettingsFilePath
-    )
+    );
 
-    // Wait a moment to ensure file is fully written
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Launch Riot Client
+    const launchSuccess = await handleRiotClientProcess(riotClientPath);
 
-    // Make file read-only and verify
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        execSync(`attrib +r "${settingsFilePath}"`);
-        const isReadOnly = execSync(`attrib "${settingsFilePath}"`).toString().includes('R');
-        if (isReadOnly) {
-          console.log('Successfully set file to read-only');
-          break;
-        }
-        throw new Error('Failed to set read-only attribute');
-      } catch (error) {
-        console.error(`Failed to set read-only (attempts left: ${retries}):`, error);
-        retries--;
-        if (retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+    // Allow time for Riot Client to load
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+
+    // Fetch current account details
+    const accountInfo = await getAccountDetails();
+    if (!accountInfo) throw new Error("Failed to fetch account details.");
+
+    console.log("Fetched Account Details:", accountInfo);
+
+    // Read current account data
+    let accountData = {};
+    if (fs.existsSync(accountDataPath)) {
+      const rawData = await fs.promises.readFile(accountDataPath, "utf-8");
+      accountData = JSON.parse(rawData);
+    }
+
+    // Update account data
+    const updatedData = {
+      ...accountData,
+      riotName: accountInfo.gameName,
+      riotTag: accountInfo.tagLine,
+      region: accountInfo.region,
+      puuid: accountInfo.puuid,
+      ranked: accountInfo.ranked,
+      penalties: accountInfo.penalties,
+      loadout: accountInfo.loadout,
+      mmr: accountInfo.mmr,
+      lastUsed: new Date().toISOString(),
+    };
+
+    // Ensure account data is updated only for the correct account
+    if (updatedData.puuid !== accountInfo.puuid) {
+      throw new Error("Mismatch in account PUUID. Possible data overwrite prevented.");
+    }
+
+    // Write updated data
+    await fs.promises.writeFile(accountDataPath, JSON.stringify(updatedData, null, 2), {
+      mode: 0o644,
+    });
+
+    console.log(`Successfully logged into account: ${accountNumber}`);
+    return true;
+  } catch (error) {
+    console.error(`Login failed for account ${accountNumber}:`, error);
+
+    // Restore backup settings if an error occurs
+    const backupFiles = [`${settingsFilePath}.backup`, `${clientSettingsFilePath}.backup`];
+    for (const backupFile of backupFiles) {
+      if (fs.existsSync(backupFile)) {
+        const targetFile = backupFile.replace(".backup", "");
+        await fs.promises.copyFile(backupFile, targetFile);
+        await fs.promises.unlink(backupFile);
       }
     }
 
-    // Verify file contents before launching
-    const originalContent = fs.readFileSync(path.join(accountPath, 'RiotGamesPrivateSettings.yaml'), 'utf8');
-    const copiedContent = fs.readFileSync(settingsFilePath, 'utf8');
-    
-    if (originalContent !== copiedContent) {
-      console.error("File contents don't match after copy!");
-      return false;
-    }
-
-    console.log('Settings file copied and protected, launching game...');
-    await handleRiotClientProcess(riotClientPath);
-
-    console.log('Waiting for game initialization...');
-    await new Promise(resolve => setTimeout(resolve, 15000));
-
-    console.log('Updating account details...');
-    const accountInfo = await getAccountDetails();
-    
-    if (accountInfo) {
-      console.log('Got account info:', JSON.stringify(accountInfo));
-      const accountData = JSON.parse(fs.readFileSync(accountDataPath, 'utf-8'));
-      const updatedData = {
-        ...accountData,
-        riotName: accountInfo.gameName,
-        riotTag: accountInfo.tagLine,
-        region: accountInfo.region,
-        puuid: accountInfo.puuid,
-        ranked: accountInfo.ranked,
-        penalties: accountInfo.penalties,
-        loadout: accountInfo.loadout,
-        mmr: accountInfo.mmr,
-        lastUsed: new Date().toISOString()
-      };
-      
-      await fs.promises.writeFile(
-        accountDataPath, 
-        JSON.stringify(updatedData, null, 2)
-      );
-      console.log("Updated account data successfully");
-      return true;
-    } else {
-      console.log('No account info returned');
-      return false;
-    }
-  } catch (error) {
-    console.error("Failed to handle login:", error);
     return false;
   }
 });
+
 async function handleRiotClientProcess(riotClientPath: string): Promise<void> {
   const riotClient = 'RiotClientServices.exe';
   

@@ -1,28 +1,37 @@
+import { GetBuddy, GetWeaponSkin } from "@/modules/API";
 import { Tooltip, Image, Paper } from "@mantine/core";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface WeaponDisplayProps {
-    weapon?: {
-        displayIcon?: string;
-        displayName?: string;
-        fullRender?: string;
-        buddy?: {
-            displayIcon?: string;
-            displayName?: string;
-            fullRender?: string;
-        }
-    }
+    weapon: any
 }
 
 export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
+    console.log(weapon);
     if (!weapon) return null;
+
+    const [skin, setSkin] = useState<{ displayIcon: string, displayName: string, fullRender: string}>();
+    const [buddy, setBuddy] = useState<{ displayIcon: string, displayName: string, fullRender: string}>();
+
+    useEffect(() => {
+        const fetchSkin = async() => {
+            const data = await GetWeaponSkin(weapon.ChromaID);
+            setSkin(data.data);
+        }
+        const fetchBuddy = async() => {
+            const data = await GetBuddy(weapon.CharmID);
+            setBuddy(data.data);
+        }
+        fetchSkin();
+        fetchBuddy();
+    }, [weapon])
 
     return (
         <Paper
             p="md"
             radius="md"
             w={120}
-            h={60}
+            h={75}
             sx={(theme) => ({
                 backgroundColor: theme.colors.dark[9],
                 border: `1px solid ${theme.colors.dark[4]}`,
@@ -35,7 +44,7 @@ export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
         >
             <div style={{ position: 'relative', height: '100%', width: '100%' }}>
                 <Tooltip
-                    label={weapon?.displayName || ''}
+                    label={skin?.displayName || ''}
                     withArrow
                     position="top"
                     sx={(theme) => ({
@@ -44,8 +53,8 @@ export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
                     })}
                 >
                     <Image
-                        src={weapon?.displayIcon ?? weapon?.fullRender}
-                        alt={weapon?.displayName}
+                        src={skin?.displayIcon ?? skin?.fullRender}
+                        alt={skin?.displayName}
                         fit="contain"
                         h="100%"
                         w="100%"
@@ -58,7 +67,7 @@ export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
                         }}
                     />
                 </Tooltip>
-                {weapon?.buddy?.displayIcon && (
+                {buddy?.displayIcon && (
                     <div style={{
                         position: 'absolute',
                         bottom: -12,
@@ -66,7 +75,7 @@ export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
                         zIndex: 2
                     }}>
                         <Tooltip
-                            label={weapon.buddy?.displayName || ''}
+                            label={buddy?.displayName || ''}
                             withArrow
                             position="bottom"
                             sx={(theme) => ({
@@ -75,8 +84,8 @@ export const WeaponDisplay: React.FC<WeaponDisplayProps> = ({ weapon }) => {
                             })}
                         >
                             <Image
-                                src={weapon.buddy.displayIcon}
-                                alt={weapon.buddy.displayName}
+                                src={buddy.displayIcon}
+                                alt={buddy.displayName}
                                 w={24}
                                 h={24}
                                 fit="contain"

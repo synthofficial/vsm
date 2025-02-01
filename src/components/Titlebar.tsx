@@ -22,7 +22,7 @@ const TitleBar = () => {
       <Flex justify="space-between" align="center" h="100%">
         <Flex gap={2}>
             <Text ml={4}>VSM</Text>
-            <Text ml={4} color="dimmed">1.1.2</Text>
+            <Text ml={4} color="dimmed">1.2.0</Text>
         </Flex>
         <Flex gap={4} sx={{ WebkitAppRegion: 'no-drag' }}>
           <ActionIcon onClick={handleMinimize} sx={(theme) => ({

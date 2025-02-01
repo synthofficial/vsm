@@ -21,11 +21,12 @@ import {
   Title,
 } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
-import { IconPencil, IconTrash, IconLogin, IconUser, IconAlertCircle, IconShoppingCart } from "@tabler/icons-react"
+import { IconPencil, IconTrash, IconLogin, IconUser, IconAlertCircle, IconShoppingCart, IconSword } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { WeaponDisplay } from "../WeaponDisplay/WeaponDisplay"
 import { Ranks } from "@/interfaces/Ranks"
 import { notifications } from "@mantine/notifications"
+import AccountLoadout from "../AccountLoadout/AccountLoadout"
 
 function convertDateToPastTime(date: string): string {
   const now = new Date()
@@ -70,38 +71,13 @@ interface AccountCardProps extends AccountProps {
 }
 
 const AccountCard: React.FC<AccountCardProps> = (props) => {
-  const [opened, { open, close }] = useDisclosure()
+  const [opened, { open, close }] = useDisclosure();
   const [banModalOpened, { open: openBanModal, close: closeBanModal }] = useDisclosure();
+
+  const [loadoutModal, { open: openLoadoutModal, close: closeLoadoutModal }] = useDisclosure();
+
   const [accountName, setAccountName] = useState<string>(props.accountName)
   const [playerCard, setPlayerCard] = useState<{ displayIcon: string; largeArt: string; smallArt: string }>()
-  const [vandalSkin, setVandalSkin] = useState<{
-    displayIcon: string;
-    displayName: string;
-    fullRender: string;
-    buddy?: {
-      displayIcon: string;
-      displayName: string;
-    };
-  }>();
-  const [phantomSkin, setPhantomSkin] = useState<{     
-    displayIcon: string;
-    displayName: string;
-    fullRender: string;
-    buddy?: {
-      displayIcon: string;
-      displayName: string;
-    }; 
-  }>();
-  const [sheriffSkin, setSheriffSkin] = useState<{ 
-    displayIcon: string;
-    displayName: string;
-    fullRender: string;
-    buddy?: {
-      displayIcon: string;
-      displayName: string;
-    }; 
-  }>()
-
   const [rank, setRank] = useState<{
     TierAfterUpdate : number;
     RankedRatingAfterUpdate : number;
@@ -112,15 +88,15 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
   const [countdown, setCountdown] = useState<string>("");
 
   const handleLogin = async () => {
-    await window.api.loginAccount(props.accountNumber)
     notifications.show(
-        {
-            title: "Account switched.",
-            message: `Loading VALORANT as ${props.riotName}#${props.riotTag}`,
-            autoClose: 5000,
-            color: "green"
-        }
-      )
+      {
+          title: "Account switched.",
+          message: `Loading VALORANT as ${props.riotName}#${props.riotTag}`,
+          autoClose: 5000,
+          color: "green"
+      }
+    )
+    await window.api.loginAccount(props.accountNumber)
     if (props.onAccountUpdate) {
       props.onAccountUpdate()
     }
@@ -166,58 +142,11 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
         console.error("Error fetching player card:", error)
       }
     }
-    const fetchVandal = async() => {
-        try {
-            const vandalGun = props.loadout.Guns.find((gun) => 
-              gun.ID === "9c82e19d-4575-0200-1a81-3eacf00cf872"
-            );
-            const skinData = await GetWeaponSkin(vandalGun?.ChromaID || "");
-            const buddyData = vandalGun?.CharmID ? 
-              await GetBuddy(vandalGun.CharmID) : null;
-    
-            setVandalSkin({
-                ...skinData.data,
-                buddy: buddyData?.data
-            });
-        } catch(error) {
-            console.error("Error fetching vandal skin or buddy:", error);
-        }
-    }
-    const fetchPhantom = async() => {
-        try{
-            const phantomGun = props.loadout.Guns.find((gun) => gun.ID === "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a");
-            const skinData = await GetWeaponSkin(phantomGun?.ChromaID || "");
-            const buddyData = phantomGun?.CharmID ? 
-              await GetBuddy(phantomGun.CharmID) : null;
-
-            setPhantomSkin({
-                ...skinData.data,
-                buddy: buddyData?.data
-            });
-        }catch(error){
-            console.error("Error fetching phantom skin or buddy:", error);
-        }
-    }
-    const fetchSheriff = async() => {
-        try{
-            const sheriffGun = props.loadout.Guns.find((gun) => gun.ID === "e336c6b8-418d-9340-d77f-7a9e4cfe0702");
-            const skinData = await GetWeaponSkin(sheriffGun?.ChromaID || "");
-            const buddyData = sheriffGun?.CharmID ?
-                await GetBuddy(sheriffGun.CharmID) : null;
-
-            setSheriffSkin({
-                ...skinData.data,
-                buddy: buddyData?.data
-            })
-        }catch(err){
-            console.error("Error fetching sheriff skin:", err)
-        }
-    }
     const checkBan = async() => {
         try {
             if(!props.penalties.Penalties.length) return;
             const latestBan = await FetchLatestBan(props.penalties.Penalties);
-            const expiryDate = new Date(latestBan.Expiry);
+            const expiryDate = new Date(latestBan!.Expiry);
             setIsBanned(expiryDate > new Date());
             setBanExpiry(expiryDate);
         } catch(err) {
@@ -239,10 +168,7 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
         }
     }
 
-    fetchPlayerCard()
-    fetchVandal();
-    fetchPhantom();
-    fetchSheriff();
+    fetchPlayerCard();
     checkBan();
     fetchRank();
   }, [props.loadout])
@@ -277,28 +203,20 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
           },
         })}
       >
-        <Card.Section>
-            <Carousel>
-                <Carousel.Slide>
-                    <Sparkline
-                        w={"100%"}
-                        h={100}
-                        data={props.ranked.Matches.map((match) => match.RankedRatingAfterUpdate).reverse()}
-                        curveType="linear"
-                        color="blue.5"
-                        fillOpacity={0.6}
-                        strokeWidth={2}
-                    />
-                </Carousel.Slide>
-                <Carousel.Slide p={12}>
-                    <Flex gap={2} align="center" justify="center">
-                        <WeaponDisplay weapon={vandalSkin!} />
-                        <WeaponDisplay weapon={phantomSkin!} />
-                        <WeaponDisplay weapon={sheriffSkin!} />
-                    </Flex>
-                </Carousel.Slide>
-            </Carousel>
-        </Card.Section>
+<Card.Section>
+  {Array.isArray(props.ranked?.Matches) && props.ranked.Matches.length > 0 ? (
+    <Sparkline
+      w="100%"
+      h={100}
+      data={props.ranked.Matches.map((match) => match?.RankedRatingAfterUpdate ?? 0).reverse()}
+      curveType="linear"
+      color="blue.5"
+      fillOpacity={0.6}
+      strokeWidth={2}
+    />
+  ) : null}
+</Card.Section>
+
 
         <Box pos="relative" w={80} mx="auto" mt={-20}>
           <Avatar
@@ -363,6 +281,7 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
                 </Button>
             </Tooltip>
           </Flex>
+          <Button leftSection={<IconSword size={16} />} color="blue" fullWidth variant="light" onClick={openLoadoutModal}>View Loadout</Button>
         </Paper>
       </Card>
 
@@ -400,7 +319,7 @@ const AccountCard: React.FC<AccountCardProps> = (props) => {
             </Button>
           </Flex>
       </Modal>
-
+      <AccountLoadout opened={loadoutModal} open={openLoadoutModal} onClose={closeLoadoutModal} account={props} />
     </>
   )
 }
